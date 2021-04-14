@@ -1,0 +1,70 @@
+-
+  name: 'Simple Web Application'
+  hosts: webserver
+  vars:
+    - code_path: /opt/flask_web_app
+    - server: mysql-server
+    - service_name: mysqld
+    - shell_command: /opt/flask_web_app nohup flask run --host=0.0.0.0 &
+
+  tasks:
+    -
+      name: 'Install all required dependencies'
+      yum:
+        name: '{{item}}'
+        state: present
+      loop:
+        - python3
+        - python3-pip
+        - python3-devel
+        - git
+    -
+      name: 'Install Python Flask dependencies'
+      pip:
+        name: '{{item}}'
+        state: present
+      loop:
+        - flask
+        - flask-mysql
+        - pymysql
+    -
+        name: 'Install MySQL Database'
+        yum:
+          name: '{{ server }}'
+          state: present
+    -
+        name: 'Start the Database'
+        service:
+          name: '{{ service_name }}'
+          state: started
+          enabled: yes
+    -
+      name: 'Create Application Database'
+      mysql_db:
+        name: employee_db
+        state: present
+
+    -
+      name: 'Create Database User'
+      mysql_user:
+        name: db_user
+        password: Passw0rd
+        priv: '*.*:ALL'
+        state: present
+        host: '%'
+
+    #- We can use the local copy as well if you do not want to get the code from Github
+      #name: 'Copy Source Code'
+      #copy:
+      #  src: app.py
+      #  dest: /opt/app.py
+
+    - name: Loading App.py from Git Repo
+      ansible.builtin.git:
+        repo: https://github.com/mmumshad/simple-webapp.git
+        dest: '{{ code_path }}'
+        clone: yes
+
+    -
+      name: 'Start the web server'
+      shell: '{{shell_command}}'
