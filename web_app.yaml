@@ -19,6 +19,15 @@
         - python3-devel
         - git
     -
+       name: configure firewall for enabling ports
+       command: "{{item}}"
+       with_items:
+            - firewall-cmd --permanent --zone=public --add-port=80/tcp
+            - firewall-cmd --permanent --zone=public --add-service=http
+            - firewall-cmd --permanent --zone=public --add-port=3306/tcp
+            - firewall-cmd --permanent --zone=public --add-port=5000/tcp
+            - firewall-cmd --reload
+    -
       name: 'Install Python Flask dependencies'
       pip:
         name: '{{item}}'
@@ -53,7 +62,7 @@
         state: present
         host: '%'
 
-    #- We can use the local copy as well if you do not want to get the code from Github
+    #-
       #name: 'Copy Source Code'
       #copy:
       #  src: app.py
